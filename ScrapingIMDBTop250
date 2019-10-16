@@ -1,1 +1,131 @@
 
+
+
+
+# Step 1 : import
+
+print('Requests version: ' + requests.__version__)
+
+import bs4
+print('Beautiful Soup version: ' + bs4.__version__)
+from bs4 import BeautifulSoup
+
+
+# Step 2 : Send Requests
+
+
+# Send a request to https://www.imdb.com/chart/top and download the HTML Content of the page
+r = requests.get('https://www.imdb.com/chart/top')
+page_html = r.text
+
+page_html[:500]
+
+
+
+# Step 3 : Pass the HTML Content to BeautifulSoup and construct a tree (BS object) to parse
+
+page_soup = BeautifulSoup(page_html, "html.parser")
+
+
+
+
+# Step 4 :  Find all the tags inside the tree that include top 250 movies' information
+
+movies = page_soup.find_all(name = "tr")
+movies[:3]
+
+# Get bs4.element.Tag that includes the highest ranking movie info
+movie = movies[1]
+movie
+
+# Check the type
+type(movie)
+
+# Print out
+print(movie.prettify())
+
+
+# Get movie name
+name = movie.find(name="td",attrs={"class":"titleColumn"}).find(name="a").string
+name = name.replace(",","|").strip()
+
+# Get movie year
+year = movie.find(name="td",attrs={"class":"titleColumn"}).find(name="span").string
+year = year.replace(")", "").replace("(", "").strip()
+
+
+# Get movie rating
+rating = movie.find(name="td",attrs={"class":"ratingColumn imdbRating"}).find(name="strong").string
+rating = rating.strip()
+
+
+# Get number of user rating
+num_user_rating = movie.find(name="td",attrs={"class":"ratingColumn imdbRating"}).find(name="strong").attrs['title']
+num_user_rating = num_user_rating.split(" ")[3].replace(",","")
+
+
+
+
+
+
+
+
+
+
+
+# Step 5 : Extract movie features and save data in a csv file
+
+# File name 'imdb_top_250.csv'
+filename = "imdb_top_250.csv"
+
+# Create above file with write permission
+f = open(filename, "w", encoding='utf-8')
+
+# Define header name
+headers = "Rank,Name,Year,Rating,Num_user_rating\n"
+
+# Write header in csv
+f.write(headers)
+
+
+Rank = 0
+for movie in movies[1:251]:
+    
+    Rank = Rank + 1
+    
+    Name = movie.find(name="td",attrs={"class":"titleColumn"}).find(name="a").string
+    Name = Name.replace(",","|").strip()
+    
+    Year = movie.find(name="td",attrs={"class":"titleColumn"}).find(name="span").string
+    Year = Year.replace(")", "").replace("(", "").strip()
+
+    Rating = movie.find(name="td",attrs={"class":"ratingColumn imdbRating"}).find(name="strong").string
+    Rating = Rating.strip()
+        
+    Num_user_rating = movie.find(name="td",attrs={"class":"ratingColumn imdbRating"}).find(name="strong").attrs['title']
+    Num_user_rating = Num_user_rating.split(" ")[3].replace(",","")
+    
+    f.write(str(Rank) + "," + Name + "," + Year + "," + Rating + "," + Num_user_rating + "\n")
+
+
+f.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,223 @@
+
+# Step 1 : Package
+
+import numpy as np
+import pandas as pd
+
+
+
+# Step 2 :  Compute sum of the first n terms of a geometric sequence
+
+def sum_geo_seq(a,r,n):
+
+    """
+    Compute sum of the first n terms of a geometric sequence
+
+    Arguments:
+    a -- Scale factor, equal to the sequence's start value
+    r -- r ≠ 0 is the common ratio
+    n -- Number of terms
+    
+    Return:
+    Sn -- sum_geo_seq(a,r,n)
+    """
+    
+    if r == 0:
+        print("Common ratio cannot be 0")
+    elif r == 1:
+        Sn = n * a
+        return Sn
+    else:
+        Sn = a * (1 - r**n) / (1 - r)
+        return Sn    
+
+# Print out result.
+a, r, n = (4, 2, 3)
+Sn = sum_geo_seq(a,r,n)
+print("A geometric sequence has starting value = %.2f, common ratio = %.2f. The sum of its first %d terms = %.2f"
+     %(a, r, n, Sn))
+
+a, r, n = (4, 1, 3)
+Sn = sum_geo_seq(a,r,n)
+print("A geometric sequence has starting value = %.2f, common ratio = %.2f. The sum of its first %d terms = %.2f"
+     %(a, r, n, Sn))
+
+a, r, n = (4, 0, 3)
+sum_geo_seq(a,r,n)
+
+
+
+
+
+
+
+
+# Step 3 :  Compute monthly mortgage payment
+
+def mth_mtg_pmt(Bal, Rate, Period):
+    
+    """
+    Compute monthly mortgage payment
+
+    Arguments:
+    Bal    -- Initial balance or Current outstanding balance
+    Rate   -- Annual interest rate in percentage
+    Period -- Amortization period or Remaining amortization period 
+    
+    Return:
+    Pmt -- mth_mtg_pmt(Bal, Rate, Period)
+    """
+    
+    #Calculate monthly interest rate
+    mRate = Rate/12/100
+    
+    #Calculate monthly mortgage payment using above defined helper function
+    a = 1 / (1 + mRate)
+    r = 1 / (1 + mRate)
+    n = Period * 12
+    D = sum_geo_seq(a,r,n)
+    
+    Pmt = Bal / D
+
+    return Pmt
+
+# Print out result.
+Bal, Rate, Period = (760000, 2.19, 25)
+Pmt = mth_mtg_pmt(Bal = 760000, Rate = 2.19, Period = 25)
+print("When balance = " + str(Bal) + ", annual interest rate = " + str(Rate) + 
+      "%, amortization period = " + str(Period) + ",")
+print("monthly mortgage payment is: " + str(round(Pmt,2)))
+
+
+
+
+
+
+
+
+# Step 4 : Create Variable Term Mortgage Amortization Schedule
+
+def var_amort(Bal, Period, CurIntRate, AdjIntRate={}):
+
+    """
+    Create mortgage amortization schedule
+
+    Arguments:
+    Bal          -- Current outstanding balance
+    Period       -- Amortization Period
+    CurIntRate   -- Current annual interest rate in percentage
+    AdjIntRate   -- Dictionay format, optional. key means number of payment, 
+                    value means the new annual interest rate in percentage
+
+    Returns:
+    Res -- Nested list. Mortgage amortization schedule including payment number, outstanding balance, monthly payment,
+           interest payment, cumulative interest payment, principal payment, cumulative principal payment
+    """
+    
+    # Parameter initialization
+    Res = []
+    CumInt = 0
+    CumPri = 0
+    
+    # Calculate monthly mortgage payment based on current balance, 
+    # annual interest rate and remaining amortization period
+    MthPmt = mth_mtg_pmt(Bal, CurIntRate, Period)
+    
+    # Create mortgage amortization cash flow
+    # Set current interest
+    Rate = CurIntRate
+    for i in range(1, Period * 12 + 1):
+    
+        # Interest Payment
+        # Calculate interest payment as of ith mortgage payment date
+        IntPmt = Bal * Rate/100/12
+        # Calculate cumulative interest payment as of ith mortgage payment date
+        CumInt = CumInt + IntPmt
+
+        # Principal Payment
+        # Calculate principal payment as of ith mortgage payment date
+        PriPmt = MthPmt - IntPmt
+        # Calculate cumulative principal payment as of ith mortgage payment date
+        CumPri = CumPri + PriPmt
+        
+        # Outstanding Balance
+        # Calculate outstanding banlance as of ith mortgage payment date
+        Bal = Bal - PriPmt
+
+        # Create mortgage payment cash flow
+        # i, Bal, MthPmt, IntPmt, CumInt, PriPmt, CumPri
+        Res.append([i, Bal, MthPmt, IntPmt, CumInt, PriPmt, CumPri])
+        
+        # Check if there's interest rate adjust on ith payment date
+        if i in AdjIntRate:
+            Rate = AdjIntRate[i]   
+
+    return Res
+
+# Print out first four payments given balance = 760000, anuual interest rate is 2.19%, 
+# amortization period is 25 years and 
+# interest rate was adjusted on the third payment date, new interest rate is 2.45%.
+var_CashFlow = var_amort(Bal=760000, Period=25, CurIntRate=2.19, AdjIntRate={3:2.45})
+print(['PmtNo','OutstandingBal','MthPmt','IntPmt','TotIntPaid','PrincipalPmt','TotPrincipalPaid'])
+print('First Payment:' , [int(i) for i in var_CashFlow[0]])
+print('Second Payment:', [int(i) for i in var_CashFlow[1]], sep='')
+print('Third Payment:' , [int(i) for i in var_CashFlow[2]])
+print('Forth Payment:' , [int(i) for i in var_CashFlow[3]])
+print('Fifth Payment:' , [int(i) for i in var_CashFlow[4]])
+
+
+
+
+
+
+# Step 5 : Convert list of cash flow into pandas DataFrame
+
+def to_Pandas(Res, FirstPmtDate, Period):
+    
+    '''
+    Create mortgage amortization schedule in Pandas DataFrame format
+
+    Arguments:
+    Res -- result from amort(Bal, Rate, Period)
+    FirstPmtDate -- String. yyyymmdd.
+    Period -- Amortization Period.
+    
+    Returns:
+    Df -- Pandas DataFrame. Complete Mortgage amortization schedule.
+    '''
+    
+    # Convert mortgage amortization schedule from nested list to Pandas DataFrame and 
+    # round all columns to 2 decimal places.
+    Df = pd.DataFrame(Res).round(2) 
+    
+    # Add column names
+    Df.columns = ['PmtNo', 'OutstandingBal', 'MthPmt', 'IntPmt', 'TotIntPaid',
+                  'PrincipalPmt', 'TotPrincipalPaid']
+
+    # Add Payment date column
+    Df['PmtDate'] = pd.date_range(start=FirstPmtDate, periods=Period*12, freq='MS')
+    
+    # Customize column order
+    Df = Df[['PmtDate','PmtNo', 'OutstandingBal', 'MthPmt', 'IntPmt', 'TotIntPaid',
+               'PrincipalPmt', 'TotPrincipalPaid']]
+    
+    return Df
+
+
+
+# Expected Output:
+to_Pandas(Res=var_CashFlow, FirstPmtDate='2017-05-01', Period=25).head(24)
+
+# Compare with fixed term
+fix_CashFlow = var_amort(Bal=760000, Period=25, CurIntRate=2.19, AdjIntRate={})
+to_Pandas(Res=fix_CashFlow, FirstPmtDate='2017-05-01', Period=25).iloc[23:24,:]
+
+
+
+
+
+
+
+
+
+

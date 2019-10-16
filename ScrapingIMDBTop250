@@ -1,7 +1,5 @@
 
 
-
-
 # Step 1 : import
 
 print('Requests version: ' + requests.__version__)

@@ -1,12 +1,19 @@
 
-
 # Step 1 : import
 
+import requests
 print('Requests version: ' + requests.__version__)
 
 import bs4
 print('Beautiful Soup version: ' + bs4.__version__)
 from bs4 import BeautifulSoup
+
+
+
+
+
+
+
 
 
 # Step 2 : Send Requests
@@ -20,9 +27,19 @@ page_html[:500]
 
 
 
+
+
+
+
 # Step 3 : Pass the HTML Content to BeautifulSoup and construct a tree (BS object) to parse
 
 page_soup = BeautifulSoup(page_html, "html.parser")
+
+
+
+
+
+
 
 
 
